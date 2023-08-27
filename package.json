@@ -124,7 +124,8 @@
       "allowToChangeInstallationDirectory": true
     },
     "files": [
-      ".webpack/**/*"
+      ".webpack/**/*",
+      "data.json"
     ],
     "directories": {
       "buildResources": "assets"

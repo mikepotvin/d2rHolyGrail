@@ -17,6 +17,7 @@ import settingsStore from './settings';
 import { updateDataToListeners } from './stream';
 import { runesMapping } from './runesMapping';
 import { getSaveGamesFolder } from 'platform-folders';
+// import { writeFile } from 'fs';
 const { readFile } = promises;
 
 class ItemsStore {
@@ -200,6 +201,16 @@ class ItemsStore {
       stats: {},
       availableRunes: {}
     };
+
+    // Make-shift persistance for the items
+    const data = (storage.getSync('savedItems') as FileReaderResponse);
+    if (data.items) {
+      results.items = data.items;
+      results.ethItems = data.ethItems;
+      results.stats = data.stats;
+      results.availableRunes = data.availableRunes;
+    }
+
     const files = readdirSync(path).filter(file => ['.d2s', '.sss', '.d2x', '.d2i'].indexOf(extname(file).toLowerCase()) !== -1);
 
     if (!eventToReply) {
@@ -271,7 +282,8 @@ class ItemsStore {
               if (!results[key][name].inSaves[saveName]) {
                 results[key][name].inSaves[saveName] = [];
               }
-              results[key][name].inSaves[saveName].push(savedItem);
+              // keep the bloat down until we have more time for a better sync
+              results[key][name].inSaves[saveName] = [ savedItem ];
             } else {
               results[key][name] = {
                 name,
@@ -285,7 +297,8 @@ class ItemsStore {
                 if (!results.availableRunes[name].inSaves[saveName]) {
                   results.availableRunes[name].inSaves[saveName] = [];
                 }
-                results.availableRunes[name].inSaves[saveName].push(savedItem);
+                // keep the bloat down until we have more time for a better sync
+                results.availableRunes[name].inSaves[saveName] = [ savedItem ];
               } else {
                 results.availableRunes[name] = {
                   name,
@@ -313,6 +326,22 @@ class ItemsStore {
       }
       event.reply('openFolder', results);
       this.currentData = results;
+
+      // Make-shift persistance for the items
+      storage.set('savedItems', results, (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
+
+      // -- for debugging purposes
+      // writeFile("./data.json", JSON.stringify(results), (err) => {
+      //   if (err) {
+      //     console.log('Failed saving the file: ' + JSON.stringify(err, null, 4));
+      //   }
+      // });
+
+
       updateDataToListeners();
     });
   }
